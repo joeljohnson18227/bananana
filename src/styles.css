@@ -1,75 +1,12 @@
-:root {
-  font-family:
-    Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  color: #172033;
-  background: #f5f7fb;
-}
+@import "tailwindcss";
 
-* {
-  box-sizing: border-box;
+@theme {
+  --font-sans: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
 }
 
 body {
   margin: 0;
-}
-
-a {
-  color: inherit;
-  text-decoration: none;
-}
-
-button,
-input {
-  font: inherit;
-}
-
-.app-shell {
   min-height: 100vh;
-}
-
-.page {
-  max-width: 1120px;
-  margin: 0 auto;
-  padding: 32px 20px;
-}
-
-.page-card {
-  width: min(440px, 100%);
-  margin: 64px auto;
-  padding: 24px;
-  border: 1px solid #dce3ef;
-  border-radius: 8px;
-  background: #ffffff;
-}
-
-.form-stack {
-  display: grid;
-  gap: 16px;
-}
-
-.form-field {
-  display: grid;
-  gap: 6px;
-}
-
-.form-field input {
-  width: 100%;
-  padding: 10px 12px;
-  border: 1px solid #c9d3e1;
-  border-radius: 6px;
-}
-
-.button {
-  display: inline-flex;
-  justify-content: center;
-  border: 0;
-  border-radius: 6px;
-  padding: 10px 14px;
-  color: #ffffff;
-  background: #2457c5;
-  cursor: pointer;
-}
-
-.muted {
-  color: #637083;
+  background: #f8fafc;
 }
