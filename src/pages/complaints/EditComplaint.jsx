@@ -16,7 +16,7 @@ const EditComplaint = () => {
         setLoading(true);
         const { data } = await api.get(`/complaints/${id}`);
         setComplaint(data);
-      } catch (err) {
+      } catch {
         setError('Complaint not found.');
       } finally {
         setLoading(false);
@@ -30,7 +30,7 @@ const EditComplaint = () => {
       await api.put(`/complaints/${id}`, updatedData);
       alert('Complaint updated successfully!');
       navigate('/student/complaints');
-    } catch (err) {
+    } catch {
       alert('Failed to update complaint.');
     }
   };

@@ -1,6 +1,5 @@
-import { useState } from 'react';
-import { NavLink, useLocation } from 'react-router-dom';
-import { MenuIcon, XIcon, HomeIcon, UserIcon, ShieldCheckIcon, ChartBarIcon, InboxIcon, CogIcon } from './Icons.jsx';
+import { NavLink } from 'react-router-dom';
+import { XIcon, HomeIcon, UserIcon, ChartBarIcon, InboxIcon, CogIcon } from './Icons.jsx';
 
 const navigation = [
   { name: 'Dashboard', href: '/student/dashboard', icon: HomeIcon, roles: ['student', 'admin'] },
@@ -9,12 +8,10 @@ const navigation = [
   { name: 'All Complaints', href: '/admin/complaints', icon: InboxIcon, roles: ['admin'] },
   { name: 'Analytics', href: '/admin/analytics', icon: ChartBarIcon, roles: ['admin'] },
   { name: 'Users', href: '/admin/users', icon: UserIcon, roles: ['admin'] },
-  { name: 'Component Test', href: '/admin/test-components', icon: ShieldCheckIcon, roles: ['admin'] },
   { name: 'Settings', href: '/settings', icon: CogIcon, roles: ['student', 'admin'] },
 ];
 
 function Sidebar({ isOpen, onClose, user }) {
-  const location = useLocation();
   const userRole = user?.role || 'student';
 
   const filteredNav = navigation.filter((item) => item.roles.includes(userRole));

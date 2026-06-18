@@ -1,12 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import api from '../../services/api';
 import Select from '../../components/ui/Select';
 import StatusBadge from '../../components/ui/StatusBadge';
 
 const UpdateStatus = () => {
   const { id } = useParams();
-  const navigate = useNavigate();
   
   const [complaint, setComplaint] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -29,7 +28,7 @@ const UpdateStatus = () => {
         } else {
           setError('Complaint not found.');
         }
-      } catch (err) {
+      } catch {
         setError('Failed to fetch complaint details.');
       } finally {
         setLoading(false);
@@ -52,7 +51,7 @@ const UpdateStatus = () => {
       
       // Auto-hide success message after 3 seconds
       setTimeout(() => setSuccess(false), 3000);
-    } catch (err) {
+    } catch {
       setError('Failed to update status. Please try again.');
     } finally {
       setIsUpdating(false);

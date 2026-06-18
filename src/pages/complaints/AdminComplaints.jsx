@@ -26,7 +26,7 @@ const AdminComplaints = () => {
         setLoading(true);
         const { data } = await api.get('/complaints');
         setComplaints(data);
-      } catch (err) {
+      } catch {
         console.error('Failed to fetch complaints');
       } finally {
         setLoading(false);

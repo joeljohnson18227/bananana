@@ -5,7 +5,6 @@ import AdminAnalytics from '../pages/AdminAnalytics.jsx';
 import AdminComplaints from '../pages/complaints/AdminComplaints.jsx';
 import AdminDashboard from '../pages/AdminDashboard.jsx';
 import AdminUsers from '../pages/AdminUsers.jsx';
-import TestAdminComponents from '../pages/admin/TestAdminComponents.jsx';
 import UpdateStatus from '../pages/admin/UpdateStatus.jsx';
 import Home from '../pages/Home.jsx';
 import Login from '../pages/Login.jsx';
@@ -44,7 +43,6 @@ function AppRoutes() {
           <Route path="admin/complaints/:id/status" element={<UpdateStatus />} />
           <Route path="admin/analytics" element={<AdminAnalytics />} />
           <Route path="admin/users" element={<AdminUsers />} />
-          <Route path="admin/test-components" element={<TestAdminComponents />} />
         </Route>
 
         <Route path="*" element={<NotFound />} />

@@ -4,6 +4,7 @@ import { DocumentTextIcon, ClockIcon, ExclamationCircleIcon, CheckCircleIcon, Ch
 
 function AdminAnalytics() {
   const stats = getAdminStats();
+  const monthlyTrendHeights = [28, 42, 55, 61, 73, 86];
 
   const categoryStats = adminComplaints.reduce((acc, complaint) => {
     acc[complaint.category] = (acc[complaint.category] || 0) + 1;
@@ -107,7 +108,7 @@ function AdminAnalytics() {
               <div key={month} className="flex-1 flex flex-col items-center">
                 <div
                   className="w-full bg-blue-600 rounded-t transition-all hover:bg-blue-700"
-                  style={{ height: `${20 + i * 15 + Math.random() * 20}%` }}
+                  style={{ height: `${monthlyTrendHeights[i]}%` }}
                 />
                 <span className="mt-2 text-xs text-slate-500">{month}</span>
               </div>

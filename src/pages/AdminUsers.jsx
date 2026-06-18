@@ -1,5 +1,3 @@
-import { adminComplaints } from '../data/dummyData.js';
-
 const dummyUsers = [
   { id: 'USR-001', name: 'John Smith', email: 'john.smith@student.edu', role: 'student', complaints: 3, status: 'active' },
   { id: 'USR-002', name: 'Emily Johnson', email: 'emily.j@student.edu', role: 'student', complaints: 1, status: 'active' },

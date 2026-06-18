@@ -16,7 +16,7 @@ const ComplaintDetails = () => {
         setLoading(true);
         const { data } = await api.get(`/complaints/${id}`);
         setComplaint(data);
-      } catch (err) {
+      } catch {
         setError('Complaint not found.');
       } finally {
         setLoading(false);

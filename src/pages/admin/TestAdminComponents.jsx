@@ -21,7 +21,7 @@ const TestAdminComponents = () => {
     { header: 'User', accessor: 'user' },
     { 
       header: 'Actions', 
-      cell: (row) => (
+      cell: () => (
         <button className="text-blue-600 hover:underline font-medium">
           View Details
         </button>

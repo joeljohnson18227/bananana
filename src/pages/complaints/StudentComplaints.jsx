@@ -1,11 +1,26 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import api from '../../services/api.js';
 import ComplaintCard from '../../components/complaints/ComplaintCard';
 import Input from '../../components/ui/Input';
 import Select from '../../components/ui/Select';
-import { SearchBox } from '../../components/admin';
 
-import { CATEGORIES } from '../../data/dummyData.js';
+const CATEGORIES = [
+  { label: 'All Categories', value: 'all' },
+  { label: 'Classroom', value: 'Classroom' },
+  { label: 'Laboratory', value: 'Laboratory' },
+  { label: 'Hostel', value: 'Hostel' },
+  { label: 'Library', value: 'Library' },
+  { label: 'Internet/Wi-Fi', value: 'Internet/Wi-Fi' },
+  { label: 'Electrical', value: 'Electrical' },
+  { label: 'Water Supply', value: 'Water Supply' },
+  { label: 'Cleanliness', value: 'Cleanliness' },
+  { label: 'IT Infrastructure', value: 'IT Infrastructure' },
+  { label: 'Facilities', value: 'Facilities' },
+  { label: 'Food Services', value: 'Food Services' },
+  { label: 'Safety', value: 'Safety' },
+  { label: 'Academic', value: 'Academic' },
+  { label: 'Other', value: 'Other' },
+];
 
 const STATUSES = [
   { label: 'All Status', value: 'all' },
@@ -23,11 +38,7 @@ const StudentComplaints = () => {
   const [statusFilter, setStatusFilter] = useState('all');
   const [sortOrder, setSortOrder] = useState('desc');
 
-  useEffect(() => {
-    fetchComplaints();
-  }, []);
-
-  const fetchComplaints = async () => {
+  async function fetchComplaints() {
     try {
       setLoading(true);
       const { data } = await api.get('/complaints');
@@ -38,14 +49,22 @@ const StudentComplaints = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      fetchComplaints();
+    }, 0);
+
+    return () => window.clearTimeout(timer);
+  }, []);
 
   const handleDelete = async (id) => {
     if (window.confirm('Are you sure you want to delete this pending complaint?')) {
       try {
         await api.delete(`/complaints/${id}`);
         setComplaints((prev) => prev.filter((c) => c.id !== id));
-      } catch (err) {
+      } catch {
         alert('Failed to delete complaint.');
       }
     }
@@ -106,7 +125,7 @@ const StudentComplaints = () => {
       {/* Filter Toolbar */}
       <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-5">
-          <SearchBox
+          <Input
             placeholder="Search by title or ID..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}

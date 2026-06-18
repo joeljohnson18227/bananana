@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import api from '../../services/api.js';
 import ComplaintForm from '../../components/complaints/ComplaintForm';
 import StatusBadge from '../../components/ui/StatusBadge';
@@ -7,20 +7,22 @@ const SubmitComplaint = () => {
   const [submissions, setSubmissions] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    // Optionally fetch existing complaints to show history below form
-    fetchHistory();
-  }, []);
-
-  const fetchHistory = async () => {
+  async function fetchHistory() {
     try {
       const { data } = await api.get('/complaints');
-      // Show only recent ones (first 3) for the submission page
       setSubmissions(data.slice(0, 3));
     } catch (err) {
       console.error('Failed to fetch history', err);
     }
-  };
+  }
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      fetchHistory();
+    }, 0);
+
+    return () => window.clearTimeout(timer);
+  }, []);
 
   const handleSubmit = async (formData) => {
     try {
@@ -45,6 +47,9 @@ const SubmitComplaint = () => {
 
       <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
         <ComplaintForm onSubmit={handleSubmit} />
+        {loading && (
+          <p className="mt-4 text-sm font-medium text-blue-700">Submitting complaint...</p>
+        )}
       </div>
 
       {submissions.length > 0 && (

@@ -27,7 +27,7 @@ export async function login(req, res) {
     } else {
       res.status(401).json({ message: 'Invalid email or password' });
     }
-  } catch (error) {
+  } catch {
     res.status(500).json({ message: 'Server error during login' });
   }
 }
@@ -65,7 +65,7 @@ export async function register(req, res) {
     } else {
       res.status(400).json({ message: 'Invalid user data' });
     }
-  } catch (error) {
+  } catch {
     res.status(500).json({ message: 'Server error during registration' });
   }
 }

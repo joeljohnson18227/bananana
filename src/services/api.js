@@ -13,4 +13,4 @@ import mockApi from './api.mock';
 
 const api = mockApi;
 
-export default mockApi;
+export default api;
