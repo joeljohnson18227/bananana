@@ -45,4 +45,33 @@ input[type="radio"]:checked {
   .lg\:pl-64 {
     padding-left: 0;
   }
+  .lg\:pl-20 {
+    padding-left: 0;
+  }
+}
+
+@media (min-width: 1024px) {
+  .lg\:pl-64 {
+    padding-left: 16rem;
+  }
+  .lg\:pl-20 {
+    padding-left: 5rem;
+  }
+}
+
+.sidebar-transition {
+  transition: width 0.3s ease-in-out, transform 0.3s ease-in-out;
+}
+
+.content-transition {
+  transition: padding-left 0.3s ease-in-out;
+}
+
+@media (max-width: 640px) {
+  .mobile-stack {
+    flex-direction: column;
+  }
+  .mobile-full {
+    width: 100%;
+  }
 }

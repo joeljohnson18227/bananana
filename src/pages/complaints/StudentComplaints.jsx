@@ -104,7 +104,7 @@ const StudentComplaints = () => {
   );
 
   return (
-    <div className="mx-auto max-w-6xl space-y-8 pb-12 px-4">
+    <div className="mx-auto max-w-6xl space-y-6 pb-8 px-4">
       {/* Header section */}
       <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-6 border-b border-slate-100 pb-8">
         <div className="space-y-2">
