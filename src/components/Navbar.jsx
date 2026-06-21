@@ -9,10 +9,10 @@ function Navbar({ onMenuClick }) {
   return (
     <>
       {/* Invisible hover trigger zone centered at the top of the viewport */}
-      <div className="fixed top-0 left-1/2 -translate-x-1/2 z-30 w-[calc(100%-2rem)] max-w-3xl h-6 bg-transparent pointer-events-auto peer" />
+      <div className="fixed top-0 left-1/2 -translate-x-1/2 z-30 w-[calc(100%-2rem)] max-w-3xl h-6 bg-transparent pointer-events-auto peer/trigger" />
 
       {/* Floating Navbar container */}
-      <div className="fixed top-0 left-1/2 -translate-x-1/2 z-40 w-[calc(100%-2rem)] max-w-3xl pointer-events-none transition-all duration-300 ease-in-out transform -translate-y-24 opacity-0 peer-hover:translate-y-4 peer-hover:opacity-100 hover:translate-y-4 hover:opacity-100 peer-hover:pointer-events-auto hover:pointer-events-auto">
+      <div className="fixed top-0 left-1/2 -translate-x-1/2 z-40 w-[calc(100%-2rem)] max-w-3xl pointer-events-none transition-all duration-300 ease-in-out transform -translate-y-24 opacity-0 peer-hover/trigger:translate-y-4 peer-hover/trigger:opacity-100 hover:translate-y-4 hover:opacity-100 peer-hover/trigger:pointer-events-auto hover:pointer-events-auto peer/nav">
         <header className="w-full bg-charcoal-900 rounded-full h-16 px-4 flex items-center justify-between border border-charcoal-900/50 shadow-md pointer-events-auto">
           <div className="flex items-center gap-3">
             <button
@@ -71,6 +71,9 @@ function Navbar({ onMenuClick }) {
           </nav>
         </header>
       </div>
+
+      {/* Tiny visual handle/cue centered at the top of the viewport */}
+      <div className="fixed top-0 left-1/2 -translate-x-1/2 z-35 w-20 h-1.5 bg-acid-lime/75 rounded-b-full pointer-events-none transition-all duration-300 opacity-100 translate-y-0 peer-hover/trigger:opacity-0 peer-hover/trigger:-translate-y-2 peer-hover/nav:opacity-0 peer-hover/nav:-translate-y-2 animate-pulse" />
     </>
   );
 }
