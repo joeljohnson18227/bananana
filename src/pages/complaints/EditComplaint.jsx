@@ -2,10 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import api from '../../services/api.js';
 import ComplaintForm from '../../components/complaints/ComplaintForm';
+import { useAuth } from '../../context/useAuth.js';
 
 const EditComplaint = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [complaint, setComplaint] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -24,6 +26,11 @@ const EditComplaint = () => {
     };
     fetchComplaint();
   }, [id]);
+
+  const isOwner = () => {
+    const ownerId = complaint?.studentId || complaint?.createdBy || complaint?.student;
+    return user?.role === 'admin' || (ownerId && ownerId.toString() === user?.id?.toString());
+  };
 
   const handleSubmit = async (updatedData) => {
     try {
@@ -45,6 +52,21 @@ const EditComplaint = () => {
     return (
       <div className="flex flex-col items-center justify-center py-20 bg-pitch-black text-center">
         <h2 className="text-xl font-bold uppercase tracking-wide text-warm-cream">{error || 'Complaint Not Found'}</h2>
+        <button 
+          onClick={() => navigate('/student/complaints')}
+          className="mt-6 text-xs uppercase tracking-wider text-warm-cream border-b border-charcoal-900 hover:text-acid-lime hover:border-acid-lime transition-all pb-1 cursor-pointer"
+        >
+          Go back to my complaints
+        </button>
+      </div>
+    );
+  }
+
+  if (!isOwner()) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 bg-pitch-black text-center">
+        <h2 className="text-xl font-bold uppercase tracking-wide text-warm-cream">Action Not Allowed</h2>
+        <p className="text-xs text-warm-cream/60 mt-2">You can only edit your own complaints.</p>
         <button 
           onClick={() => navigate('/student/complaints')}
           className="mt-6 text-xs uppercase tracking-wider text-warm-cream border-b border-charcoal-900 hover:text-acid-lime hover:border-acid-lime transition-all pb-1 cursor-pointer"

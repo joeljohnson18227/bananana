@@ -1,12 +1,16 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { useAuth } from '../../context/useAuth.js';
 import StatusBadge from '../ui/StatusBadge';
 
 const ComplaintCard = ({ complaint, onDelete }) => {
+  const { user } = useAuth();
   const { title, category, submittedAt, status, id } = complaint;
   
-  // Requirement: Edit/Delete only for Pending complaints
+  const ownerId = complaint.studentId || complaint.createdBy || complaint.student;
+  const isOwner = user?.role === 'admin' || (ownerId && ownerId.toString() === user?.id?.toString());
   const isPending = status.toLowerCase() === 'pending';
+  const canModify = isPending && isOwner;
 
   return (
     <div className="flex flex-col rounded-[25px] border border-charcoal-900 bg-charcoal-900/60 p-6 shadow-none transition-all hover:border-warm-cream/20 group relative overflow-hidden">
@@ -50,7 +54,7 @@ const ComplaintCard = ({ complaint, onDelete }) => {
         </div>
 
         {/* Action Buttons: Only for Pending Complaints */}
-        {isPending && (
+        {canModify && (
           <div className="flex items-center gap-3 pt-1">
             <Link
               to={`/student/complaints/edit/${id}`}

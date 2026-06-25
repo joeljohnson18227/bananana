@@ -1,12 +1,54 @@
+import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
+import api from '../services/api.js';
 import { useAuth } from '../context/useAuth.js';
 import StatCard from '../components/StatCard.jsx';
 import { DocumentTextIcon, ClockIcon, ExclamationCircleIcon, CheckCircleIcon, UsersIcon, ChartBarIcon, InboxIcon, CogIcon } from '../components/Icons.jsx';
-import { getAdminStats, adminComplaints, statusColors, priorityColors } from '../data/dummyData.js';
+import { statusColors, priorityColors } from '../data/dummyData.js';
 
 function AdminDashboard() {
   const { user } = useAuth();
-  const stats = getAdminStats();
+  const [complaints, setComplaints] = useState([]);
+
+  useEffect(() => {
+    let active = true;
+
+    async function fetchComplaints() {
+      try {
+        const { data } = await api.get('/complaints');
+        if (active) {
+          setComplaints(data);
+        }
+      } catch {
+        if (active) {
+          setComplaints([]);
+        }
+      }
+    }
+
+    fetchComplaints();
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const stats = useMemo(() => {
+    const total = complaints.length;
+    const pending = complaints.filter((complaint) => complaint.status === 'pending').length;
+    const inProgress = complaints.filter((complaint) => complaint.status === 'in_progress').length;
+    const resolved = complaints.filter((complaint) => complaint.status === 'resolved').length;
+
+    return { total, pending, inProgress, resolved };
+  }, [complaints]);
+
+  const recentComplaints = useMemo(
+    () =>
+      [...complaints]
+        .sort((a, b) => new Date(b.submittedAt || 0) - new Date(a.submittedAt || 0))
+        .slice(0, 6),
+    [complaints],
+  );
 
   return (
     <div className="space-y-8 bg-pitch-black">
@@ -58,7 +100,7 @@ function AdminDashboard() {
             <h2 className="text-xs font-bold tracking-[0.25em] uppercase text-warm-cream">Recent Complaints</h2>
           </div>
           <div className="divide-y divide-charcoal-900">
-            {adminComplaints.slice(0, 6).map((complaint) => (
+            {recentComplaints.map((complaint) => (
               <div
                 key={complaint.id}
                 className="px-6 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 hover:bg-charcoal-900/30 transition-colors"

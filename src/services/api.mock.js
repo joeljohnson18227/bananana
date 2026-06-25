@@ -67,16 +67,27 @@ function getCurrentUser() {
   return userStr ? JSON.parse(userStr) : null;
 }
 
+function getComplaintOwnerId(complaint) {
+  return complaint.studentId || complaint.createdBy || complaint.student || null;
+}
+
 function getVisibleComplaintsForUser(complaints) {
   const user = getCurrentUser();
 
-  if (!user || user.role === 'admin') {
+  if (!user) {
     return complaints;
   }
 
-  const ownedComplaints = complaints.filter((complaint) => complaint.studentId === user.id);
+  return complaints;
+}
 
-  return ownedComplaints.length > 0 ? ownedComplaints : complaints.slice(0, 8);
+function isComplaintOwner(user, complaint) {
+  if (!user || !complaint) {
+    return false;
+  }
+
+  const ownerId = complaint.studentId || complaint.createdBy || complaint.student;
+  return ownerId === user.id;
 }
 
 const mockApi = {
@@ -91,6 +102,30 @@ const mockApi = {
       const user = localStorage.getItem('ccms_user');
       if (!user) throw createError(401, 'Unauthorized');
       return { data: { user: JSON.parse(user) } };
+    }
+
+    if (url === '/admin/users') {
+      const users = getMockUsers();
+      const complaints = getMockComplaints();
+      const complaintCounts = complaints.reduce((acc, complaint) => {
+        const ownerId = getComplaintOwnerId(complaint);
+        if (!ownerId) {
+          return acc;
+        }
+        acc[ownerId] = (acc[ownerId] || 0) + 1;
+        return acc;
+      }, {});
+
+      return {
+        data: users.map((user) => ({
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          role: user.role,
+          complaints: complaintCounts[user.id] || 0,
+          status: complaintCounts[user.id] > 0 ? 'active' : 'inactive',
+        })),
+      };
     }
 
     if (url.startsWith('/complaints/')) {
@@ -136,7 +171,7 @@ const mockApi = {
         studentId: user?.id,
         studentName: user?.name || 'Demo Student',
         status: 'pending',
-        priority: data.priority || 'medium',
+        priority: 'medium',
         submittedAt: new Date().toISOString(),
         resolvedAt: null,
         assignedTo: null,
@@ -145,6 +180,36 @@ const mockApi = {
       complaints.unshift(newComplaint);
       saveMockComplaints(complaints);
       return { data: newComplaint };
+    }
+
+    if (url === '/admin/users') {
+      const users = getMockUsers();
+      if (!data?.name || !data?.email || !data?.password || !data?.role) {
+        throw createError(400, 'Name, email, password, and role are required');
+      }
+      if (!['student', 'admin'].includes(String(data.role).toLowerCase())) {
+        throw createError(400, 'Invalid role');
+      }
+      if (users.some((u) => u.email === data.email)) {
+        throw createError(409, 'Email already exists');
+      }
+      const newUser = {
+        id: 'usr_' + Date.now(),
+        name: data.name,
+        email: data.email,
+        password: data.password,
+        role: String(data.role).toLowerCase(),
+      };
+      users.unshift(newUser);
+      saveMockUsers(users);
+      const { password: _password, ...userWithoutPassword } = newUser;
+      return {
+        data: {
+          ...userWithoutPassword,
+          complaints: 0,
+          status: 'inactive',
+        },
+      };
     }
 
     throw createError(404, 'Not found');
@@ -158,8 +223,69 @@ const mockApi = {
       const index = complaints.findIndex((complaint) => complaint.id === id);
 
       if (index === -1) throw createError(404, 'Complaint not found');
+      const user = getCurrentUser();
+
+      if (!isComplaintOwner(user, complaints[index])) {
+        throw createError(403, 'Not authorized to edit this complaint');
+      }
 
       complaints[index] = { ...complaints[index], ...data };
+      saveMockComplaints(complaints);
+      return { data: complaints[index] };
+    }
+
+    if (url.startsWith('/admin/users/')) {
+      const id = url.split('/').pop();
+      const users = getMockUsers();
+      const index = users.findIndex((user) => user.id === id);
+
+      if (index === -1) {
+        throw createError(404, 'User not found');
+      }
+
+      if (data?.role && !['student', 'admin'].includes(String(data.role).toLowerCase())) {
+        throw createError(400, 'Invalid role');
+      }
+
+      const updatedUser = { ...users[index], ...data };
+      if (data?.role) {
+        updatedUser.role = String(data.role).toLowerCase();
+      }
+      users[index] = updatedUser;
+      saveMockUsers(users);
+      const complaints = getMockComplaints();
+      const complaintCount = complaints.filter((complaint) => complaint.studentId === id || complaint.createdBy === id || complaint.student === id).length;
+      const { password: _password, ...userWithoutPassword } = updatedUser;
+      return {
+        data: {
+          id: userWithoutPassword.id,
+          name: userWithoutPassword.name,
+          email: userWithoutPassword.email,
+          role: userWithoutPassword.role,
+          complaints: complaintCount,
+          status: complaintCount > 0 ? 'active' : 'inactive',
+        },
+      };
+    }
+
+    if (url.startsWith('/admin/complaints/') && url.endsWith('/priority')) {
+      const segments = url.split('/');
+      const id = segments[segments.length - 2];
+      const complaints = getMockComplaints();
+      const index = complaints.findIndex((complaint) => complaint.id === id);
+
+      if (index === -1) {
+        throw createError(404, 'Complaint not found');
+      }
+
+      if (!data?.priority || !['low', 'medium', 'high'].includes(String(data.priority).toLowerCase())) {
+        throw createError(400, 'Invalid complaint priority');
+      }
+
+      complaints[index] = {
+        ...complaints[index],
+        priority: String(data.priority).toLowerCase(),
+      };
       saveMockComplaints(complaints);
       return { data: complaints[index] };
     }
@@ -191,12 +317,32 @@ const mockApi = {
       const id = url.split('/').pop();
       const complaints = getMockComplaints();
       const filtered = complaints.filter((complaint) => complaint.id !== id);
+      const target = complaints.find((complaint) => complaint.id === id);
+      const user = getCurrentUser();
 
       if (filtered.length === complaints.length) {
         throw createError(404, 'Complaint not found');
       }
 
+      if (!isComplaintOwner(user, target)) {
+        throw createError(403, 'Not authorized to delete this complaint');
+      }
+
       saveMockComplaints(filtered);
+      return { data: { success: true } };
+    }
+
+    if (url.startsWith('/admin/users/')) {
+      const id = url.split('/').pop();
+      const users = getMockUsers();
+      const index = users.findIndex((user) => user.id === id);
+
+      if (index === -1) {
+        throw createError(404, 'User not found');
+      }
+
+      users.splice(index, 1);
+      saveMockUsers(users);
       return { data: { success: true } };
     }
 

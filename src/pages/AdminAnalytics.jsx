@@ -1,25 +1,117 @@
-import { getAdminStats, adminComplaints } from '../data/dummyData.js';
+import { useEffect, useMemo, useState } from 'react';
+import api from '../services/api.js';
 import StatCard from '../components/StatCard.jsx';
 import { DocumentTextIcon, ClockIcon, ExclamationCircleIcon, CheckCircleIcon } from '../components/Icons.jsx';
+import { useAuth } from '../context/useAuth.js';
 
 function AdminAnalytics() {
-  const stats = getAdminStats();
-  const monthlyTrendHeights = [28, 42, 55, 61, 73, 86];
+  const { isAuthenticated } = useAuth();
+  const [complaints, setComplaints] = useState([]);
 
-  const categoryStats = adminComplaints.reduce((acc, complaint) => {
-    acc[complaint.category] = (acc[complaint.category] || 0) + 1;
-    return acc;
-  }, {});
+  async function fetchComplaints() {
+    if (!isAuthenticated) return;
+    console.log('Fetching complaints...');
+    try {
+      // Changed to admin/complaints to ensure we get all complaints
+      const { data } = await api.get('/admin/complaints');
+      console.log('Complaints data:', data);
+      setComplaints(data);
+    } catch (err) {
+      console.error('Fetch complaints error:', err);
+      setComplaints([]);
+    }
+  }
 
-  const statusStats = adminComplaints.reduce((acc, complaint) => {
-    acc[complaint.status] = (acc[complaint.status] || 0) + 1;
-    return acc;
-  }, {});
+  useEffect(() => {
+    fetchComplaints();
+  }, [isAuthenticated]);
 
-  const priorityStats = adminComplaints.reduce((acc, complaint) => {
-    acc[complaint.priority] = (acc[complaint.priority] || 0) + 1;
-    return acc;
-  }, {});
+  const stats = useMemo(() => {
+    const total = complaints.length;
+    const pending = complaints.filter((complaint) => complaint.status === 'pending').length;
+    const inProgress = complaints.filter((complaint) => complaint.status === 'in_progress').length;
+    const resolved = complaints.filter((complaint) => complaint.status === 'resolved').length;
+
+    return { total, pending, inProgress, resolved };
+  }, [complaints]);
+
+  const categoryStats = useMemo(
+    () =>
+      complaints.reduce((acc, complaint) => {
+        acc[complaint.category] = (acc[complaint.category] || 0) + 1;
+        return acc;
+      }, {}),
+    [complaints],
+  );
+
+  const statusStats = useMemo(
+    () =>
+      complaints.reduce((acc, complaint) => {
+        acc[complaint.status] = (acc[complaint.status] || 0) + 1;
+        return acc;
+      }, {}),
+    [complaints],
+  );
+
+  const priorityStats = useMemo(
+    () =>
+      complaints.reduce((acc, complaint) => {
+        acc[complaint.priority || 'medium'] = (acc[complaint.priority || 'medium'] || 0) + 1;
+        return acc;
+      }, {}),
+    [complaints],
+  );
+
+  const monthlyTrend = useMemo(() => {
+    if (complaints.length === 0) {
+      return [
+        { label: 'No Data', count: 0 },
+        { label: '', count: 0 },
+        { label: '', count: 0 },
+        { label: '', count: 0 },
+        { label: '', count: 0 },
+        { label: '', count: 0 },
+      ];
+    }
+
+    const months = [];
+    const latestDate = complaints.reduce((latest, complaint) => {
+      const date = new Date(complaint.submittedAt || 0);
+      return date > latest ? date : latest;
+    }, new Date(0));
+
+    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+    for (let i = 5; i >= 0; i -= 1) {
+      const monthDate = new Date(Date.UTC(latestDate.getUTCFullYear(), latestDate.getUTCMonth() - i, 1));
+      const year = monthDate.getUTCFullYear();
+      const month = monthDate.getUTCMonth();
+      const count = complaints.filter((complaint) => {
+        const complaintDate = new Date(complaint.submittedAt || 0);
+        return complaintDate.getUTCFullYear() === year && complaintDate.getUTCMonth() === month;
+      }).length;
+
+      months.push({
+        label: monthNames[month],
+        count,
+      });
+    }
+
+    return months;
+  }, [complaints]);
+
+  const maxMonthlyCount = Math.max(...monthlyTrend.map((month) => month.count), 1);
+  const chartPoints = monthlyTrend.map((month, index) => {
+    const x = (index / Math.max(monthlyTrend.length - 1, 1)) * 100;
+    const y = 100 - (month.count / maxMonthlyCount) * 100;
+
+    return { x, y, count: month.count, label: month.label };
+  });
+  const chartPath = chartPoints.length
+    ? `M ${chartPoints
+        .map((point) => `${point.x.toFixed(2)} ${point.y.toFixed(2)}`)
+        .join(' L ')}`
+    : '';
 
   return (
     <div className="space-y-8 bg-pitch-black">
@@ -103,16 +195,40 @@ function AdminAnalytics() {
 
         <div className="rounded-[25px] border border-charcoal-900 bg-charcoal-900/60 p-6 shadow-none relative overflow-hidden">
           <h2 className="text-xs font-bold tracking-[0.2em] uppercase text-warm-cream mb-6 font-oldschoolgrotesk">Monthly Trend</h2>
-          <div className="h-48 flex items-end justify-around gap-2 px-2">
-            {['Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar'].map((month, i) => (
-              <div key={month} className="flex-1 flex flex-col items-center group">
-                <div
-                  className="w-full max-w-[24px] bg-pitch-black border border-charcoal-900 rounded-t-[8px] transition-all hover:bg-acid-lime hover:border-transparent duration-300"
-                  style={{ height: `${monthlyTrendHeights[i]}%` }}
-                />
-                <span className="mt-3 text-[10px] font-bold tracking-widest text-warm-cream/40 uppercase">{month}</span>
-              </div>
-            ))}
+          <div className="h-48 px-2">
+            <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="h-full w-full overflow-visible">
+              <defs>
+                <linearGradient id="monthlyTrendLine" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" stopColor="#c8ff2d" />
+                  <stop offset="100%" stopColor="#f6c445" />
+                </linearGradient>
+                <linearGradient id="monthlyTrendFill" x1="0%" y1="0%" x2="0%" y2="100%">
+                  <stop offset="0%" stopColor="#c8ff2d" stopOpacity="0.28" />
+                  <stop offset="100%" stopColor="#c8ff2d" stopOpacity="0" />
+                </linearGradient>
+              </defs>
+              <line x1="0" y1="100" x2="100" y2="100" stroke="rgba(255,255,255,0.12)" strokeWidth="1" />
+              {chartPath && (
+                <>
+                  <path d={`${chartPath} L 100 100 L 0 100 Z`} fill="url(#monthlyTrendFill)" />
+                  <path d={chartPath} fill="none" stroke="url(#monthlyTrendLine)" strokeWidth="2.5" strokeLinejoin="round" strokeLinecap="round" />
+                </>
+              )}
+              {chartPoints.map((point, index) => (
+                <g key={`${point.label}-${index}`}>
+                  <circle cx={point.x} cy={point.y} r="2.8" fill="#c8ff2d" />
+                  <circle cx={point.x} cy={point.y} r="5" fill="transparent" stroke="rgba(200,255,45,0.18)" strokeWidth="2" />
+                </g>
+              ))}
+            </svg>
+            <div className="mt-3 grid grid-cols-6 gap-2 px-1">
+              {monthlyTrend.map((month, i) => (
+                <div key={`${month.label}-${i}`} className="text-center">
+                  <span className="block text-[10px] font-bold tracking-widest text-warm-cream/40 uppercase">{month.label || 'No Data'}</span>
+                  <span className="mt-1 block text-[10px] font-bold tracking-widest text-acid-lime uppercase">{month.count}</span>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </div>

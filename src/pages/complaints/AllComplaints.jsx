@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../../services/api.js';
-import { useAuth } from '../../context/useAuth.js';
 import ComplaintCard from '../../components/complaints/ComplaintCard';
 import Input from '../../components/ui/Input';
 import Select from '../../components/ui/Select';
@@ -31,8 +30,7 @@ const STATUSES = [
   { label: 'Resolved', value: 'resolved' },
 ];
 
-const StudentComplaints = ({ showAll = false }) => {
-  const { user } = useAuth();
+const AllComplaints = () => {
   const [complaints, setComplaints] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -62,28 +60,8 @@ const StudentComplaints = ({ showAll = false }) => {
     return () => window.clearTimeout(timer);
   }, []);
 
-  const handleDelete = async (id) => {
-    if (window.confirm('Are you sure you want to delete this pending complaint?')) {
-      try {
-        await api.delete(`/complaints/${id}`);
-        setComplaints((prev) => prev.filter((c) => c.id !== id));
-      } catch {
-        alert('Failed to delete complaint.');
-      }
-    }
-  };
-
   const filteredComplaints = useMemo(() => {
     let result = complaints.filter((complaint) => {
-      const isOwner =
-        complaint.studentId === user?.id ||
-        complaint.createdBy === user?.id ||
-        complaint.student === user?.id;
-
-      if (!showAll && !isOwner) {
-        return false;
-      }
-
       const matchesSearch =
         complaint.title.toLowerCase().includes(search.toLowerCase()) ||
         complaint.id.toLowerCase().includes(search.toLowerCase());
@@ -101,7 +79,18 @@ const StudentComplaints = ({ showAll = false }) => {
     });
 
     return result;
-  }, [complaints, search, categoryFilter, statusFilter, sortOrder, showAll, user?.id]);
+  }, [complaints, search, categoryFilter, statusFilter, sortOrder]);
+
+  const handleDelete = async (id) => {
+    if (window.confirm('Are you sure you want to delete this pending complaint?')) {
+      try {
+        await api.delete(`/complaints/${id}`);
+        setComplaints((prev) => prev.filter((c) => c.id !== id));
+      } catch {
+        alert('Failed to delete complaint.');
+      }
+    }
+  };
 
   if (loading) return (
     <div className="flex items-center justify-center py-20 bg-pitch-black">
@@ -125,11 +114,9 @@ const StudentComplaints = ({ showAll = false }) => {
     <div className="mx-auto max-w-6xl space-y-8 pb-8 px-4 bg-pitch-black">
       <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-6 border-b border-charcoal-900 pb-8">
         <div className="space-y-1.5">
-          <h1 className="text-3xl font-black tracking-tight text-warm-cream uppercase font-oldschoolgrotesk">
-            My Complaints
-          </h1>
+          <h1 className="text-3xl font-black tracking-tight text-warm-cream uppercase font-oldschoolgrotesk">All Complaints</h1>
           <p className="text-xs text-warm-cream/60 tracking-wide font-light">
-            Manage and track your submitted campus issues.
+            Browse every campus complaint in one place.
           </p>
         </div>
         <Link
@@ -206,4 +193,4 @@ const StudentComplaints = ({ showAll = false }) => {
   );
 };
 
-export default StudentComplaints;
+export default AllComplaints;

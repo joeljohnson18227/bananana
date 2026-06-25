@@ -19,6 +19,7 @@ const AdminComplaints = () => {
   const [statusFilter, setStatusFilter] = useState('all');
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [sortOrder, setSortOrder] = useState('desc'); // 'asc' or 'desc'
+  const [updatingPriorityId, setUpdatingPriorityId] = useState(null);
 
   useEffect(() => {
     const fetchComplaints = async () => {
@@ -80,12 +81,50 @@ const AdminComplaints = () => {
     {
       header: 'Actions',
       cell: (row) => (
-        <Link 
-          to={`/admin/complaints/${row.id}/status`}
-          className="text-[10px] font-black tracking-widest text-acid-lime hover:text-lime-400 uppercase transition-all cursor-pointer"
-        >
-          Update Status ↗
-        </Link>
+        <div className="flex flex-col gap-3 min-w-[180px]">
+          <Link
+            to={`/admin/complaints/${row.id}/status`}
+            className="text-[10px] font-black tracking-widest text-acid-lime hover:text-lime-400 uppercase transition-all cursor-pointer"
+          >
+            Update Status ↗
+          </Link>
+          <div className="space-y-1.5">
+            <span className="block text-[9px] font-bold tracking-[0.2em] text-warm-cream/40 uppercase">Priority</span>
+            <Select
+              value={row.priority || 'medium'}
+              onChange={async (e) => {
+                const nextPriority = e.target.value;
+
+                if (nextPriority === row.priority) {
+                  return;
+                }
+
+                try {
+                  setUpdatingPriorityId(row.id);
+                  const { data } = await api.patch(`/admin/complaints/${row.id}/priority`, {
+                    priority: nextPriority,
+                  });
+                  setComplaints((current) =>
+                    current.map((complaint) =>
+                      complaint.id === row.id ? { ...complaint, priority: data.priority } : complaint,
+                    ),
+                  );
+                } catch {
+                  alert('Failed to update priority.');
+                } finally {
+                  setUpdatingPriorityId(null);
+                }
+              }}
+              options={[
+                { label: 'Low', value: 'low' },
+                { label: 'Medium', value: 'medium' },
+                { label: 'High', value: 'high' },
+              ]}
+              className="w-full"
+              disabled={updatingPriorityId === row.id}
+            />
+          </div>
+        </div>
       )
     }
   ];

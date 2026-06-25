@@ -1,10 +1,6 @@
 import mongoose from 'mongoose';
 import Complaint from '../models/Complaint.js';
 
-function isAdmin(user) {
-  return user?.role === 'admin';
-}
-
 function getCreatorId(complaint) {
   const createdBy = complaint?.createdBy || complaint?.student;
 
@@ -162,7 +158,7 @@ export async function createComplaint(req, res) {
       location,
       createdBy: req.user.id,
       student: req.user.id,
-      priority: req.body.priority || 'medium',
+      priority: 'medium',
       assignedTo: req.body.assignedTo ?? null,
     });
 
@@ -185,13 +181,7 @@ export async function createComplaint(req, res) {
 
 export async function getComplaints(req, res) {
   try {
-    const filter = isAdmin(req.user)
-      ? {}
-      : {
-          $or: [{ createdBy: req.user.id }, { student: req.user.id }],
-        };
-
-    const complaints = await Complaint.find(filter)
+    const complaints = await Complaint.find({})
       .sort({ createdDate: -1 })
       .populate([
         { path: 'createdBy', select: 'name email role' },
@@ -237,10 +227,6 @@ export async function getComplaintById(req, res) {
 
     if (!complaint) {
       return res.status(404).json({ message: 'Complaint not found' });
-    }
-
-    if (!isAdmin(req.user) && !isCreator(req.user, complaint)) {
-      return res.status(403).json({ message: 'Not authorized to view this complaint' });
     }
 
     return res.status(200).json(formatComplaint(complaint));
@@ -332,6 +318,43 @@ export async function updateComplaintStatus(req, res) {
 
 export async function updateAdminComplaintStatus(req, res) {
   return updateComplaintStatus(req, res);
+}
+
+export async function updateAdminComplaintPriority(req, res) {
+  try {
+    const { priority } = req.body;
+
+    if (!priority) {
+      return res.status(400).json({ message: 'Priority is required' });
+    }
+
+    const normalizedPriority = String(priority).toLowerCase();
+    const allowedPriorities = ['low', 'medium', 'high'];
+
+    if (!allowedPriorities.includes(normalizedPriority)) {
+      return res.status(400).json({ message: 'Invalid complaint priority' });
+    }
+
+    const complaint = await findComplaintById(req.params.id);
+
+    if (!complaint) {
+      return res.status(404).json({ message: 'Complaint not found' });
+    }
+
+    complaint.priority = normalizedPriority;
+    const updatedComplaint = await complaint.save();
+    await updatedComplaint.populate([
+      { path: 'createdBy', select: 'name email role' },
+      { path: 'student', select: 'name email role' },
+    ]);
+
+    return res.status(200).json(formatComplaint(updatedComplaint));
+  } catch (error) {
+    return res.status(500).json({
+      message: 'Failed to update complaint priority',
+      error: error.message,
+    });
+  }
 }
 
 export async function deleteComplaint(req, res) {

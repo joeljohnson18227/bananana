@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import api from '../../services/api.js';
+import { useAuth } from '../../context/useAuth.js';
 import StatusBadge from '../../components/ui/StatusBadge';
 
 const ComplaintDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [complaint, setComplaint] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -47,6 +49,9 @@ const ComplaintDetails = () => {
   }
 
   const isPending = complaint.status.toLowerCase() === 'pending';
+  const ownerId = complaint.studentId || complaint.createdBy || complaint.student;
+  const canEdit =
+    isPending && (user?.role === 'admin' || (ownerId && ownerId.toString() === user?.id?.toString()));
 
   return (
     <div className="mx-auto max-w-4xl space-y-8 pb-12 px-4 bg-pitch-black">
@@ -74,7 +79,7 @@ const ComplaintDetails = () => {
             <h2 className="text-2xl font-bold text-warm-cream tracking-tight mt-1">{complaint.title}</h2>
           </div>
           
-          {isPending && (
+          {canEdit && (
             <div className="flex items-center gap-3">
               <Link
                 to={`/student/complaints/edit/${complaint.id}`}
