@@ -1,16 +1,15 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { Link } from 'react-router-dom';
 import api from '../../services/api.js';
 import StatusBadge from '../../components/ui/StatusBadge';
 import Select from '../../components/ui/Select';
-import { 
-  AdminTable, 
-  FilterBar, 
-  SearchBox, 
-  StatusDropdown 
+import {
+  AdminTable,
+  FilterBar,
+  SearchBox,
+  StatusDropdown,
 } from '../../components/admin';
 import { CATEGORIES } from '../../data/dummyData.js';
-
-import { Link } from 'react-router-dom';
 
 const AdminComplaints = () => {
   const [complaints, setComplaints] = useState([]);
@@ -18,7 +17,7 @@ const AdminComplaints = () => {
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [categoryFilter, setCategoryFilter] = useState('all');
-  const [sortOrder, setSortOrder] = useState('desc'); // 'asc' or 'desc'
+  const [sortOrder, setSortOrder] = useState('desc');
   const [updatingPriorityId, setUpdatingPriorityId] = useState(null);
 
   useEffect(() => {
@@ -33,13 +32,14 @@ const AdminComplaints = () => {
         setLoading(false);
       }
     };
+
     fetchComplaints();
   }, []);
 
   const filteredAndSortedComplaints = useMemo(() => {
-    let result = complaints.filter((c) => {
+    const result = complaints.filter((c) => {
       const searchLower = search.toLowerCase();
-      const matchesSearch = 
+      const matchesSearch =
         (c.title || '').toLowerCase().includes(searchLower) ||
         (c.studentName || '').toLowerCase().includes(searchLower) ||
         (c.id || '').toLowerCase().includes(searchLower);
@@ -62,26 +62,32 @@ const AdminComplaints = () => {
     { header: 'Student Name', accessor: 'studentName' },
     { header: 'Complaint Title', accessor: 'title' },
     { header: 'Category', accessor: 'category' },
-    { 
-      header: 'Date', 
+    {
+      header: 'Date',
       cell: (row) => {
         const date = new Date(row.submittedAt);
-        if (isNaN(date.getTime())) return 'Invalid Date';
+        if (Number.isNaN(date.getTime())) return 'Invalid Date';
         return date.toLocaleDateString('en-US', {
           year: 'numeric',
           month: 'short',
-          day: 'numeric'
+          day: 'numeric',
         });
-      }
+      },
     },
-    { 
-      header: 'Status', 
-      cell: (row) => <StatusBadge status={row.status} /> 
+    {
+      header: 'Status',
+      cell: (row) => <StatusBadge status={row.status} />,
     },
     {
       header: 'Actions',
       cell: (row) => (
         <div className="flex flex-col gap-3 min-w-[180px]">
+          <Link
+            to={`/admin/complaints/${row.id}`}
+            className="text-[10px] font-black tracking-widest text-warm-cream hover:text-acid-lime uppercase transition-all cursor-pointer"
+          >
+            View Details ↗
+          </Link>
           <Link
             to={`/admin/complaints/${row.id}/status`}
             className="text-[10px] font-black tracking-widest text-acid-lime hover:text-lime-400 uppercase transition-all cursor-pointer"
@@ -125,23 +131,25 @@ const AdminComplaints = () => {
             />
           </div>
         </div>
-      )
-    }
+      ),
+    },
   ];
 
   return (
     <div className="space-y-8 bg-pitch-black">
       <div>
         <h1 className="text-3xl font-black tracking-tight text-warm-cream uppercase font-oldschoolgrotesk">Admin Complaint List</h1>
-        <p className="mt-1.5 text-xs text-warm-cream/60 tracking-wide font-light">Review and manage all submitted campus complaints.</p>
+        <p className="mt-1.5 text-xs text-warm-cream/60 tracking-wide font-light">
+          Review and manage all submitted campus complaints.
+        </p>
       </div>
 
       <FilterBar>
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-center w-full">
           <div className="md:col-span-1">
-            <SearchBox 
-              value={search} 
-              onChange={(e) => setSearch(e.target.value)} 
+            <SearchBox
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
               placeholder="Search student or title..."
             />
           </div>
@@ -151,9 +159,9 @@ const AdminComplaints = () => {
             options={[{ label: 'All Categories', value: 'all' }, ...CATEGORIES]}
             className="w-full"
           />
-          <StatusDropdown 
-            value={statusFilter} 
-            onChange={(e) => setStatusFilter(e.target.value)} 
+          <StatusDropdown
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
             className="w-full"
           />
           <Select
@@ -170,9 +178,9 @@ const AdminComplaints = () => {
         </div>
       </FilterBar>
 
-      <AdminTable 
-        columns={columns} 
-        data={filteredAndSortedComplaints} 
+      <AdminTable
+        columns={columns}
+        data={filteredAndSortedComplaints}
         isLoading={loading}
         emptyMessage="No complaints found matching your criteria."
       />

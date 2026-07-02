@@ -48,10 +48,49 @@ function formatComplaint(complaint) {
     studentName: createdBy && typeof createdBy === 'object' ? createdBy.name : undefined,
     createdDate: complaint.createdDate,
     submittedAt: complaint.createdDate,
+    attachments: Array.isArray(complaint.attachments) ? complaint.attachments : [],
+    viewedByAdminAt: complaint.viewedByAdminAt ?? null,
+    viewedByAdmin: Boolean(complaint.viewedByAdminAt),
     priority: complaint.priority || 'medium',
     assignedTo: complaint.assignedTo ?? null,
     resolvedAt: complaint.resolvedAt ?? null,
   };
+}
+
+function normalizeAttachments(rawAttachments) {
+  if (!rawAttachments) {
+    return [];
+  }
+
+  let attachments = rawAttachments;
+
+  if (typeof attachments === 'string') {
+    try {
+      attachments = JSON.parse(attachments);
+    } catch {
+      return [];
+    }
+  }
+
+  if (!Array.isArray(attachments)) {
+    return [];
+  }
+
+  return attachments
+    .filter((attachment) => attachment && typeof attachment === 'object')
+    .map((attachment) => {
+      const type = typeof attachment.type === 'string' ? attachment.type : '';
+      const kind = attachment.kind === 'video' || type.startsWith('video/') ? 'video' : 'image';
+
+      return {
+        name: typeof attachment.name === 'string' ? attachment.name : 'attachment',
+        type,
+        size: Number(attachment.size) || 0,
+        dataUrl: typeof attachment.dataUrl === 'string' ? attachment.dataUrl : '',
+        kind,
+      };
+    })
+    .filter((attachment) => attachment.dataUrl);
 }
 
 function escapeRegex(value) {
@@ -145,6 +184,7 @@ async function findComplaintById(id) {
 export async function createComplaint(req, res) {
   try {
     const { title, category, description, location } = req.body;
+    const attachments = normalizeAttachments(req.body.attachments);
 
     if (!title || !category || !description || !location) {
       return res.status(400).json({
@@ -157,6 +197,7 @@ export async function createComplaint(req, res) {
       category,
       description,
       location,
+      attachments,
       createdBy: req.user.id,
       student: req.user.id,
       priority: 'medium',
@@ -170,9 +211,6 @@ export async function createComplaint(req, res) {
 
     return res.status(201).json(formatComplaint(populatedComplaint));
   } catch (error) {
-    console.log('ERROR START');
-  console.error(error);
-  console.log('ERROR END');
     return res.status(500).json({
       message: 'Failed to create complaint',
       error: error.message,
@@ -263,6 +301,10 @@ export async function updateComplaint(req, res) {
         complaint[field] = req.body[field];
       }
     });
+
+    if (req.body.attachments !== undefined) {
+      complaint.attachments = normalizeAttachments(req.body.attachments);
+    }
 
     const updatedComplaint = await complaint.save();
     await updatedComplaint.populate([
@@ -371,6 +413,34 @@ export async function updateAdminComplaintPriority(req, res) {
   } catch (error) {
     return res.status(500).json({
       message: 'Failed to update complaint priority',
+      error: error.message,
+    });
+  }
+}
+
+export async function markComplaintViewedByAdmin(req, res) {
+  try {
+    const complaint = await findComplaintById(req.params.id);
+
+    if (!complaint) {
+      return res.status(404).json({ message: 'Complaint not found' });
+    }
+
+    if (complaint.viewedByAdminAt) {
+      return res.status(200).json(formatComplaint(complaint));
+    }
+
+    complaint.viewedByAdminAt = new Date();
+    const updatedComplaint = await complaint.save();
+    await updatedComplaint.populate([
+      { path: 'createdBy', select: 'name email role' },
+      { path: 'student', select: 'name email role' },
+    ]);
+
+    return res.status(200).json(formatComplaint(updatedComplaint));
+  } catch (error) {
+    return res.status(500).json({
+      message: 'Failed to mark complaint as viewed',
       error: error.message,
     });
   }

@@ -82,6 +82,12 @@ const SubmitComplaint = () => {
                   <p className="text-warm-cream/60 text-xs mt-1">{sub.description}</p>
                 </div>
 
+                {Array.isArray(sub.attachments) && sub.attachments.length > 0 && (
+                  <div className="text-[10px] uppercase tracking-wider text-warm-cream/40">
+                    {sub.attachments.length} attachment{sub.attachments.length === 1 ? '' : 's'} included
+                  </div>
+                )}
+
                 <div className="pt-2 text-[10px] text-warm-cream/40 border-t border-charcoal-900">
                   Submitted: {new Date(sub.submittedAt).toLocaleString()}
                 </div>

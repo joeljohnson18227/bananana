@@ -4,7 +4,7 @@ import api from '../../services/api.js';
 import { useAuth } from '../../context/useAuth.js';
 import StatusBadge from '../../components/ui/StatusBadge';
 
-const ComplaintDetails = () => {
+const AdminComplaintDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -24,25 +24,45 @@ const ComplaintDetails = () => {
         setLoading(false);
       }
     };
+
     fetchComplaint();
   }, [id]);
 
-  if (loading) return (
-    <div className="flex items-center justify-center py-20 bg-pitch-black">
-      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-acid-lime"></div>
-    </div>
-  );
+  useEffect(() => {
+    const markViewed = async () => {
+      if (!complaint || user?.role !== 'admin' || complaint.viewedByAdmin) {
+        return;
+      }
+
+      try {
+        const { data } = await api.patch(`/admin/complaints/${complaint.id}/viewed`);
+        setComplaint(data);
+      } catch {
+        // Non-blocking: the details page should still render if this fails.
+      }
+    };
+
+    markViewed();
+  }, [complaint, user?.role]);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-20 bg-pitch-black">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-acid-lime"></div>
+      </div>
+    );
+  }
 
   if (error || !complaint) {
     return (
       <div className="flex flex-col items-center justify-center py-20 bg-pitch-black text-center">
         <h2 className="text-xl font-bold uppercase tracking-wide text-warm-cream">{error || 'Complaint Not Found'}</h2>
         <p className="text-xs text-warm-cream/60 mt-2">The complaint you are looking for does not exist.</p>
-        <Link 
-          to="/student/complaints" 
+        <Link
+          to="/admin/complaints"
           className="mt-6 text-xs uppercase tracking-wider text-warm-cream border-b border-charcoal-900 hover:text-acid-lime hover:border-acid-lime transition-all pb-0.5"
         >
-          Go back to my complaints
+          Back to admin complaints
         </Link>
       </div>
     );
@@ -56,7 +76,7 @@ const ComplaintDetails = () => {
   return (
     <div className="mx-auto max-w-4xl space-y-8 pb-12 px-4 bg-pitch-black">
       <div className="flex items-center gap-4">
-        <button 
+        <button
           onClick={() => navigate(-1)}
           className="rounded-full p-2 hover:bg-charcoal-900 text-warm-cream/60 hover:text-warm-cream transition-colors cursor-pointer"
         >
@@ -64,7 +84,10 @@ const ComplaintDetails = () => {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
           </svg>
         </button>
-        <h1 className="text-3xl font-black tracking-tight text-warm-cream uppercase font-oldschoolgrotesk">Complaint Details</h1>
+        <div className="space-y-1.5">
+          <h1 className="text-3xl font-black tracking-tight text-warm-cream uppercase font-oldschoolgrotesk">Complaint Details</h1>
+          <p className="text-[10px] text-warm-cream/40 font-mono tracking-wider">Admin access</p>
+        </div>
       </div>
 
       <div className="rounded-[25px] border border-charcoal-900 bg-charcoal-900/60 overflow-hidden shadow-none relative">
@@ -78,14 +101,14 @@ const ComplaintDetails = () => {
             </div>
             <h2 className="text-2xl font-bold text-warm-cream tracking-tight mt-1">{complaint.title}</h2>
           </div>
-          
+
           {canEdit && (
             <div className="flex items-center gap-3">
               <Link
-                to={`/student/complaints/edit/${complaint.id}`}
+                to={`/admin/complaints/${complaint.id}/status`}
                 className="rounded-full bg-acid-lime px-6 py-2.5 text-xs font-black tracking-widest text-pitch-black hover:bg-lime-400 transition-all uppercase cursor-pointer"
               >
-                Edit Complaint ↗
+                Update Status
               </Link>
             </div>
           )}
@@ -94,8 +117,8 @@ const ComplaintDetails = () => {
         <div className="p-8 space-y-8">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div className="space-y-1">
-              <label className="text-[10px] font-bold text-warm-cream/60 uppercase tracking-wider">Category</label>
-              <p className="text-base font-semibold text-warm-cream">{complaint.category}</p>
+              <label className="text-[10px] font-bold text-warm-cream/60 uppercase tracking-wider">Student</label>
+              <p className="text-base font-semibold text-warm-cream">{complaint.studentName || 'Unknown'}</p>
             </div>
             <div className="space-y-1">
               <label className="text-[10px] font-bold text-warm-cream/60 uppercase tracking-wider">Created Date</label>
@@ -110,13 +133,7 @@ const ComplaintDetails = () => {
             </div>
             <div className="space-y-1">
               <label className="text-[10px] font-bold text-warm-cream/60 uppercase tracking-wider">Priority</label>
-              <div className="flex items-center gap-2 mt-1">
-                <span className={`w-2.5 h-2.5 rounded-full ${
-                  complaint.priority === 'high' ? 'bg-ember-orange animate-pulse' : 
-                  complaint.priority === 'medium' ? 'bg-schoolbus-yellow' : 'bg-acid-lime'
-                }`}></span>
-                <p className="text-base font-semibold text-warm-cream capitalize">{complaint.priority}</p>
-              </div>
+              <p className="text-base font-semibold text-warm-cream capitalize">{complaint.priority}</p>
             </div>
             <div className="space-y-1">
               <label className="text-[10px] font-bold text-warm-cream/60 uppercase tracking-wider">Location</label>
@@ -184,7 +201,9 @@ const ComplaintDetails = () => {
                   </svg>
                 </div>
                 <div>
-                  <p className="text-sm text-warm-cream/60 font-medium">Assigned to: <span className="font-bold text-warm-cream">{complaint.assignedTo}</span></p>
+                  <p className="text-sm text-warm-cream/60 font-medium">
+                    Assigned to: <span className="font-bold text-warm-cream">{complaint.assignedTo}</span>
+                  </p>
                 </div>
               </div>
             </div>
@@ -195,4 +214,4 @@ const ComplaintDetails = () => {
   );
 };
 
-export default ComplaintDetails;
+export default AdminComplaintDetails;
