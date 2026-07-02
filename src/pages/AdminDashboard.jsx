@@ -123,6 +123,12 @@ function AdminDashboard() {
                     {complaint.priority}
                   </span>
                 </div>
+                <Link
+                  to={`/admin/complaints/${complaint.id}`}
+                  className="text-[10px] font-black tracking-widest text-warm-cream hover:text-acid-lime uppercase transition-all self-start sm:self-auto"
+                >
+                  View Details ↗
+                </Link>
               </div>
             ))}
           </div>

@@ -5,8 +5,8 @@ import StatusBadge from '../ui/StatusBadge';
 
 const ComplaintCard = ({ complaint, onDelete }) => {
   const { user } = useAuth();
-  const { title, category, submittedAt, status, id } = complaint;
-  
+  const { title, category, submittedAt, status, id, attachments = [] } = complaint;
+
   const ownerId = complaint.studentId || complaint.createdBy || complaint.student;
   const isOwner = user?.role === 'admin' || (ownerId && ownerId.toString() === user?.id?.toString());
   const isPending = status.toLowerCase() === 'pending';
@@ -44,8 +44,8 @@ const ComplaintCard = ({ complaint, onDelete }) => {
               })}
             </span>
           </div>
-          
-          <Link 
+
+          <Link
             to={`/student/complaints/${id}`}
             className="rounded-full border border-charcoal-900 bg-transparent px-4 py-2 text-[10px] font-bold tracking-widest text-warm-cream hover:bg-warm-cream hover:text-pitch-black hover:border-warm-cream transition-all flex items-center gap-1 uppercase"
           >
@@ -53,7 +53,22 @@ const ComplaintCard = ({ complaint, onDelete }) => {
           </Link>
         </div>
 
-        {/* Action Buttons: Only for Pending Complaints */}
+        {attachments.length > 0 && (
+          <div className="flex items-center gap-2 text-[10px] uppercase tracking-wider text-warm-cream/40">
+            <span className="rounded-full border border-charcoal-900 px-2 py-1">
+              {attachments.length} attachment{attachments.length === 1 ? '' : 's'}
+            </span>
+          </div>
+        )}
+
+        {complaint.viewedByAdmin && (
+          <div className="flex items-center gap-2 text-[10px] uppercase tracking-wider text-acid-lime">
+            <span className="rounded-full border border-acid-lime/40 bg-acid-lime/10 px-2 py-1 font-black">
+              Viewed
+            </span>
+          </div>
+        )}
+
         {canModify && (
           <div className="flex items-center gap-3 pt-1">
             <Link

@@ -22,6 +22,18 @@ const complaintSchema = new mongoose.Schema(
       required: [true, 'Please add a location'],
       trim: true,
     },
+    attachments: {
+      type: [
+        {
+          name: { type: String, trim: true, default: '' },
+          type: { type: String, trim: true, default: '' },
+          size: { type: Number, default: 0 },
+          dataUrl: { type: String, default: '' },
+          kind: { type: String, enum: ['image', 'video'], default: 'image' },
+        },
+      ],
+      default: [],
+    },
     status: {
       type: String,
       enum: ['pending', 'open', 'in_progress', 'resolved', 'rejected'],
@@ -56,6 +68,10 @@ const complaintSchema = new mongoose.Schema(
       type: Date,
       default: null,
     },
+    viewedByAdminAt: {
+      type: Date,
+      default: null,
+    },
     createdDate: {
       type: Date,
       default: Date.now,
@@ -85,6 +101,9 @@ const complaintSchema = new mongoose.Schema(
         ret.createdByName = creatorName;
         ret.createdByEmail = populatedCreatedBy?.email ?? populatedStudent?.email;
         ret.submittedAt = ret.createdDate;
+        ret.attachments = Array.isArray(ret.attachments) ? ret.attachments : [];
+        ret.viewedByAdminAt = ret.viewedByAdminAt ?? null;
+        ret.viewedByAdmin = Boolean(ret.viewedByAdminAt);
         if (ret.status === 'open') {
           ret.status = 'pending';
         }

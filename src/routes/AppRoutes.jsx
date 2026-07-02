@@ -5,6 +5,7 @@ import AdminAnalytics from '../pages/AdminAnalytics.jsx';
 import AdminComplaints from '../pages/complaints/AdminComplaints.jsx';
 import AdminDashboard from '../pages/AdminDashboard.jsx';
 import AdminUsers from '../pages/AdminUsers.jsx';
+import AdminComplaintDetails from '../pages/admin/AdminComplaintDetails.jsx';
 import UpdateStatus from '../pages/admin/UpdateStatus.jsx';
 import Home from '../pages/Home.jsx';
 import Login from '../pages/Login.jsx';
@@ -42,6 +43,7 @@ function AppRoutes() {
         <Route element={<ProtectedRoute allowedRoles={['admin']} />}>
           <Route path="admin/dashboard" element={<AdminDashboard />} />
           <Route path="admin/complaints" element={<AdminComplaints />} />
+          <Route path="admin/complaints/:id" element={<AdminComplaintDetails />} />
           <Route path="admin/complaints/:id/status" element={<UpdateStatus />} />
           <Route path="admin/analytics" element={<AdminAnalytics />} />
           <Route path="admin/users" element={<AdminUsers />} />

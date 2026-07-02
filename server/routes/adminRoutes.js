@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import {
   getAdminComplaints,
+  markComplaintViewedByAdmin,
   updateAdminComplaintPriority,
   updateAdminComplaintStatus,
 } from '../controllers/complaintController.js';
@@ -25,5 +26,6 @@ router.put('/users/:id', updateAdminUser);
 router.delete('/users/:id', deleteAdminUser);
 router.put('/status/:id', updateAdminComplaintStatus);
 router.patch('/complaints/:id/priority', updateAdminComplaintPriority);
+router.patch('/complaints/:id/viewed', markComplaintViewedByAdmin);
 
 export default router;
